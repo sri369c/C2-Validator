@@ -1,4 +1,4 @@
-﻿/**
+/**
  * This file is part of C2 Validator <https://github.com/StevenJDH/C2-Validator>.
  * Copyright (C) 2020 Steven Jenkins De Haro.
  *
@@ -16,6 +16,12 @@
  * along with C2 Validator.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+ /**
+  * Updated by sri369
+  * 
+  * Added -silent command line parameter option to support silent runs when invoked from other programs
+  */
+
 using C2_Validator.Classes;
 using C2_Validator.Interfaces;
 using System;
@@ -32,7 +38,16 @@ namespace C2_Validator
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(GetLogo());
+            var silentMode = false;
+            if (args.Length > 0 && args[0] == "-silent")
+            {
+                silentMode = true;
+            }
+
+            if (!silentMode)
+            {
+                Console.WriteLine(GetLogo());
+            }
 
             try
             {
@@ -49,29 +64,63 @@ namespace C2_Validator
 
                 var certDetails = GetCertDetails(rootCert, basicConstraints);
 
-                Console.WriteLine(certDetails);
+                if (!silentMode)
+                {
+                    Console.WriteLine(certDetails);
+                }
 
                 if (basicConstraints == null || basicConstraints.CertificateAuthority == false || basicConstraints.Critical == false)
                 {
-                    Console.WriteLine("--ISSUE DETECTED--");
-                    Console.WriteLine("You will need to regenerate the certificate above before upgrading.\n");
+                    if (!silentMode)
+                    {
+                        Console.WriteLine("--ISSUE DETECTED--");
+                        Console.WriteLine("You will need to regenerate the certificate above before upgrading.\n");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("--CHECK PASSED--");
-                    Console.WriteLine("It is safe to upgrade to Qlik Sense February 2020 or newer.\n");
+                    if (!silentMode)
+                    {
+                        Console.WriteLine("--CHECK PASSED--");
+                        Console.WriteLine("It is safe to upgrade to Qlik Sense February 2020 or newer.\n");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Valid");
+                    }
                 }
             }
             catch (NullReferenceException)
             {
-                Console.WriteLine("Error: Certificate bound to port 4242 was not found in the 'Local Machine/Personal' store.\n");
+                if (!silentMode)
+                {
+                    Console.WriteLine("Error: Certificate bound to port 4242 was not found in the 'Local Machine/Personal' store.\n");
+                }
+                else
+                {
+                    Console.WriteLine("Not Found");
+                }
             }
             catch (Exception ex) when(ex is CryptographicException || ex is StandardErrorException)
             {
-                Console.WriteLine($"Error: {ex.Message}\n");
+                if (!silentMode)
+                {
+                    Console.WriteLine($"Error: {ex.Message}\n");
+                }
+                else
+                {
+                    Console.WriteLine("Error");
+                }
             }
 
-            PauseConsoleForExit();
+            if (!silentMode)
+            {
+                PauseConsoleForExit();
+            }
         }
 
         /// <summary>
